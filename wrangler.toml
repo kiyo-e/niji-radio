@@ -1,0 +1,42 @@
+name = "niji-radio"
+main = "src/index.tsx"
+compatibility_date = "2024-12-03"
+assets = { directory = "public" }
+
+# compatibility_flags = [ "nodejs_compat" ]
+[durable_objects]
+bindings = [
+  { name = "MUSIC_SYNC", class_name = "MusicSyncObject" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = [ "MusicSyncObject" ]
+
+# [vars]
+# MY_VAR = "my-variable"
+
+# [[kv_namespaces]]
+# binding = "MY_KV_NAMESPACE"
+# id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# [[r2_buckets]]
+# binding = "MY_BUCKET"
+# bucket_name = "my-bucket"
+
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "my-database"
+# database_id = ""
+
+# [ai]
+# binding = "AI"
+
+# [observability]
+# enabled = true
+# head_sampling_rate = 1
+
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "niji-radio"
+preview_bucket_name = "niji-radio-preview"
