@@ -1,149 +1,176 @@
 # Niji Radio
 
-Niji Radioは、複数のユーザー間で音楽を同期して再生できるWeb アプリケーションです。Cloudflare Workersとその Durable Objects を利用して、リアルタイムな同期を実現しています。
+Niji Radio is a web application that allows multiple users to synchronize and play music together. It utilizes Cloudflare Workers and its Durable Objects to achieve real-time synchronization.
 
-## 主な機能
+## Key Features
 
-- 複数ユーザー間での音楽の同期再生
-- プレイリストの動的管理（追加、削除、クリア）
-- WebSocketを使用したリアルタイム同期
-- ブラウザでの音楽再生制御
-- 残り時間と次の曲への切り替え時間の表示
+- Synchronized music playback across multiple users
+- Dynamic playlist management (add, delete, clear)
+- Real-time synchronization using WebSockets
+- Music playback control in the browser
+- Display of remaining time and time until the next track
 
-## 技術スタック
+## Tech Stack
 
 - **Runtime**: Cloudflare Workers
 - **State Management**: Durable Objects
 - **Framework**: Hono
-- **開発ツール**: Wrangler
+- **Development Tool**: Wrangler
 
-## システム構成
+## System Architecture
 
-### バックエンド (MusicSyncObject)
+### Backend (MusicSyncObject)
 
-MusicSyncObjectは以下の機能を提供します：
+MusicSyncObject provides the following functionalities:
 
-- プレイリストの動的管理
-  - 新しい曲の追加
-  - 再生済み曲の自動削除
-  - プレイリストの完全クリア
-- 再生状態の同期
-- WebSocket接続の管理
-- トラック切り替えの自動化
+- Dynamic playlist management
+  - Adding new tracks
+  - Automatic removal of played tracks
+  - Complete clearing of the playlist
+- Synchronization of playback state
+- WebSocket connection management
+- Automation of track switching
 
-### フロントエンド
+### Frontend
 
-- シンプルなHTML/JavaScript実装
-- WebSocket接続による同期
-- ブラウザのAudio APIを使用した音楽再生
-- 残り時間と次の曲の切り替え時間のリアルタイム表示
+- Simple HTML/JavaScript implementation
+- Synchronization via WebSocket connection
+- Music playback using the browser's Audio API
+- Real-time display of remaining time and time until the next track
 
-## API仕様
+## API Specification
 
-### HTTP エンドポイント
+### HTTP Endpoints
 
 #### GET /
-- 説明: メインのWebインターフェースを提供
-- レスポンス: HTML
+
+- Description: Provides the main web interface
+- Response: HTML
 
 #### POST /api/setPlaylist
-- 説明: プレイリストに曲を追加
-- 動作: 既存のプレイリストに新しい曲を追加（置き換えではない）
-- リクエストボディ:
+
+- Description: Sets the playlist
+- Behavior: Replaces the existing playlist with a new one
+- Request body:
+
 ```json
 [
   {
-    "url": "音楽ファイルのURL",
-    "duration": 再生時間（ミリ秒）
+    "url": "URL of the music file",
+    "duration": Duration in milliseconds
+  }
+]
+```
+
+#### POST /api/addToPlaylist
+
+- Description: Adds tracks to the playlist
+- Behavior: Appends new tracks to the existing playlist
+- Request body:
+
+```json
+[
+  {
+    "url": "URL of the music file",
+    "duration": Duration in milliseconds
   }
 ]
 ```
 
 #### POST /api/clearPlaylist
-- 説明: プレイリストを完全にクリア
-- 動作: 全ての曲を削除し、再生を停止
-- リクエストボディ: 不要
+
+- Description: Completely clears the playlist
+- Behavior: Removes all tracks and stops playback
+- Request body: None
 
 #### GET /api/getPlaylist
-- 説明: 現在のプレイリストを取得
-- レスポンス: プレイリスト情報（JSON）
 
-### WebSocket通信
+- Description: Retrieves the current playlist
+- Response: Playlist information (JSON)
 
-#### サーバーからクライアントへのメッセージ
+### WebSocket Communication
 
-1. 同期メッセージ
+#### Messages from Server to Client
+
+1. Synchronization message
+
 ```json
 {
   "type": "sync",
-  "elapsedTime": 経過時間（ミリ秒）,
-  "trackUrl": "現在再生中の曲のURL",
-  "duration": 曲の長さ（ミリ秒）
+  "elapsedTime": Elapsed time in milliseconds,
+  "trackUrl": "URL of the currently playing track",
+  "duration": Track length in milliseconds
 }
 ```
 
-2. トラック変更メッセージ
+2. Track change message
+
 ```json
 {
   "type": "changeTrack",
-  "trackUrl": "新しい曲のURL",
-  "duration": 曲の長さ（ミリ秒）
+  "trackUrl": "URL of the new track",
+  "duration": Track length in milliseconds
 }
 ```
 
-## セットアップと実行方法
+## Setup and Execution
 
-### 開発環境のセットアップ
+### Development Environment Setup
 
 ```bash
-# 依存パッケージのインストール
+# Install dependencies
 npm install
 ```
 
-### ローカル開発
+### Local Development
 
 ```bash
-# 開発サーバーの起動
+# Start the development server
 npm run dev
 ```
 
-### デプロイ
+### Deployment
 
 ```bash
-# Cloudflare Workersへのデプロイ
+# Deploy to Cloudflare Workers
 npm run deploy
 ```
 
-## 技術的な詳細
+## Technical Details
 
-### プレイリスト管理の仕組み
+### Playlist Management Mechanism
 
-1. 新しい曲の追加
-   - POST /setPlaylistで新しい曲を追加
-   - 既存のプレイリストの末尾に追加
-   - プレイリストが空の場合は即座に再生開始
+1. Adding new tracks
+    -   Add new tracks with `POST /api/addToPlaylist`
+    -   Appends to the end of the existing playlist
+    -   Starts playback immediately if the playlist is empty
 
-2. 再生済み曲の管理
-   - 曲の再生が完了すると自動的にプレイリストから削除
-   - 次の曲が自動的に再生開始
-   - プレイリストが空になった場合は再生を停止
+2. Setting the playlist
+    -   Set a new playlist with `POST /api/setPlaylist`
+    -   Replaces the existing playlist with the new one
+    -   Immediately starts playing the first track of the new playlist
 
-3. プレイリストのクリア
-   - POST /api/clearPlaylistでプレイリストを完全にクリア
-   - 現在再生中の曲も停止
-   - 全てのクライアントに再生停止を通知
+3. Management of played tracks
+    -   Automatically removes tracks from the playlist when they finish playing
+    -   Automatically starts playing the next track
+    -   Stops playback if the playlist becomes empty
 
-### 同期の仕組み
+4. Clearing the playlist
+    -   Completely clears the playlist with `POST /api/clearPlaylist`
+    -   Also stops the currently playing track
+    -   Notifies all clients to stop playback
 
-1. クライアントがWebSocket接続を確立
-2. サーバーは現在の再生状態（曲のURL、経過時間、曲の長さ）を送信
-3. クライアントは受信した情報に基づいて再生位置を調整
-4. 曲が終了すると自動的に次の曲に切り替わり、全クライアントに通知
-5. 残り時間と次の曲への切り替え時間をリアルタイムに表示
+### Synchronization Mechanism
 
-### Durable Objectsの利用
+1. Client establishes a WebSocket connection
+2. Server sends the current playback state (track URL, elapsed time, track length)
+3. Client adjusts the playback position based on the received information
+4. When a track ends, it automatically switches to the next track and notifies all clients
+5. Displays the remaining time and time until the next track in real time
 
-- プレイリストの永続化
-- 再生状態の管理
-- WebSocket接続の管理
-- トラック切り替えのスケジューリング
+### Use of Durable Objects
+
+-   Playlist persistence
+-   Playback state management
+-   WebSocket connection management
+-   Track switching scheduling
